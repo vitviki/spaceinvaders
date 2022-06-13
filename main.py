@@ -2,24 +2,13 @@ import pygame
 import os
 import time
 import random
+import constants
+import ship
+import projectile
 
 pygame.font.init()
-
-################# GAME WINDOW CONSTANTS #################
-WINDOW_SIZE                 = width, height = 750, 750
-WINDOW                      = pygame.display.set_mode(WINDOW_SIZE)
-FPS                         = 60
+WINDOW                      = pygame.display.set_mode(constants.WINDOW_SIZE)
 pygame.display.set_caption("Space Invaders")
-
-################ COLORS #################
-WHITE   = (255, 255, 255)
-RED     = (255, 0, 0)
-GREEN   = (0, 255, 0)
-BLUE    = (0, 0, 255)
-YELLOW  = (255, 255, 0)
-ORANGE  = (255, 69, 0)
-BLACK   = (0, 0, 0)
-
 
 # Load assets
 def loadAssets(ships, projectiles, backgrounds, fonts):
@@ -37,7 +26,7 @@ def loadAssets(ships, projectiles, backgrounds, fonts):
     projectiles['yellow']       = pygame.image.load(os.path.join('assets', 'pixel_laser_yellow.png'))
     
     # Background
-    backgrounds['black']        = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'background-black.png')), WINDOW_SIZE)
+    backgrounds['black']        = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'background-black.png')), constants.WINDOW_SIZE)
 
     # Font
     fonts['comicsans']          = pygame.font.SysFont('comicsans', 30)
@@ -46,8 +35,8 @@ def main():
 
     run = True
     clock = pygame.time.Clock()
-    level = 1
-    lives = 5
+    current_level = constants.LEVEL
+    current_lives = constants.LIVES
     ships = {}
     projectiles = {}
     backgrounds = {}
@@ -55,26 +44,29 @@ def main():
 
     loadAssets(ships, projectiles, backgrounds, fonts)
 
+    sample = ship.Ship(200, 400)
+
     def redraw_window():
         
         # Render background image
         WINDOW.blit(backgrounds['black'], (0, 0))
 
         # Draw in game text
-        lives_label = fonts['comicsans'].render(f"Lives: {lives}",1, WHITE)
-        level_label = fonts['comicsans'].render(f"Level: {level}",1, WHITE)
+        lives_label = fonts['comicsans'].render(f"Lives: {current_lives}",1, constants.WHITE)
+        level_label = fonts['comicsans'].render(f"Level: {current_level}",1, constants.WHITE)
 
         WINDOW.blit(lives_label, (10, 10))
-        WINDOW.blit(level_label, (WINDOW_SIZE[0] - lives_label.get_width() - 10, 10 ))
+        WINDOW.blit(level_label, (constants.WINDOW_SIZE[0] - lives_label.get_width() - 10, 10 ))
 
-
+        sample.draw(WINDOW)
 
         pygame.display.update()
 
 
+
     while run:
 
-        clock.tick(FPS)
+        clock.tick(constants.FPS)
         redraw_window()
 
         for event in pygame.event.get():
