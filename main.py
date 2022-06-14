@@ -14,10 +14,10 @@ pygame.display.set_caption("Space Invaders")
 def loadAssets(ships, projectiles, backgrounds, fonts):
     
     # Ships
-    ships['red_ship']           = pygame.image.load(os.path.join('assets', 'pixel_ship_red_small.png'))
-    ships['green_ship']         = pygame.image.load(os.path.join('assets', 'pixel_ship_green_small.png'))
-    ships['blue_ship']          = pygame.image.load(os.path.join('assets', 'pixel_ship_blue_small.png'))
-    ships['yellow_player_ship'] = pygame.image.load(os.path.join('assets', 'pixel_ship_yellow.png'))
+    ships['red_ship']           = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_red_small.png')), constants.SHIP_SIZE_STANDARD)
+    ships['green_ship']         = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_green_small.png')), constants.SHIP_SIZE_STANDARD)
+    ships['blue_ship']          = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_blue_small.png')), constants.SHIP_SIZE_STANDARD)
+    ships['yellow_player_ship'] = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_yellow.png')), constants.SHIP_SIZE_STANDARD)
     
     # Projectiles
     projectiles['red']          = pygame.image.load(os.path.join('assets', 'pixel_laser_red.png'))
@@ -30,6 +30,44 @@ def loadAssets(ships, projectiles, backgrounds, fonts):
 
     # Font
     fonts['comicsans']          = pygame.font.SysFont('comicsans', 30)
+
+class Player(ship.Ship):
+
+    def __init__(self, x, y, ship_img, projectile_img, health=100):
+
+        super().__init__(x, y, health)
+        self.ship_img = ship_img
+        self.projectile_img = projectile_img
+        self.mask = pygame.mask.from_surface(self.ship_img)
+        self.max_health = health
+
+    def move_projectiles(self, velocity, objs):
+
+        self.cooldown()
+        for projectile in self.projectiles:
+
+            projectile.move(velocity)
+            if projectile.off_screen(constants.WINDOW_SIZE[1]):
+                self.projectiles.remove(projectile)
+            else:
+                for obj in objs:
+                    if projectile.collision(obj):
+                        objs.remove(obj)
+                        if projectile in self.projectiles:
+                            self.projectiles.remove(projectile)
+
+    def draw(self, window):
+
+        super().draw(window)
+        self.healthbar(window)
+
+    def healthbar(self, window):
+
+        pygame.draw.rect(window, constants.RED, (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width(), 10))
+        pygame.draw.rect(window, constants.GREEN, (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width() * (self.health / self.max_health), 10))
+
+    
+
 
 def main():
 
@@ -44,7 +82,7 @@ def main():
 
     loadAssets(ships, projectiles, backgrounds, fonts)
 
-    sample = ship.Ship(200, 400)
+    player = Player(constants.PLAYER_SHIP_SPAWN_COORD[0], constants.PLAYER_SHIP_SPAWN_COORD[1], ships['yellow_player_ship'], projectiles['yellow'])
 
     def redraw_window():
         
@@ -58,8 +96,7 @@ def main():
         WINDOW.blit(lives_label, (10, 10))
         WINDOW.blit(level_label, (constants.WINDOW_SIZE[0] - lives_label.get_width() - 10, 10 ))
 
-        sample.draw(WINDOW)
-
+        player.draw(WINDOW)
         pygame.display.update()
 
 

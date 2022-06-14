@@ -1,7 +1,6 @@
 # Abstract Ship class. 
 # Every other ship in the game will be an object of this ship
 import constants
-import projectile
 import pygame
 
 class Ship:
@@ -18,10 +17,10 @@ class Ship:
 
     def draw(self, window):
         
-        pygame.draw.rect(window, constants.RED, (self.x, self.y, 50, 50))
-        # window.blit(self.ship_img, (self.x, self.y))
-        # for projectile in self.projectiles:
-        #     projectile.draw(window)
+        
+        window.blit(self.ship_img, (self.x, self.y))
+        for projectile in self.projectiles:
+             projectile.draw(window)
 
     def move_projectiles(self, velocity, obj):
 
