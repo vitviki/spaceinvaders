@@ -2,6 +2,7 @@
 # Every other ship in the game will be an object of this ship
 import constants
 import pygame
+import projectile
 
 class Ship:
 
@@ -44,8 +45,8 @@ class Ship:
     def shoot(self):
 
         if self.cool_down_counter == 0:
-            projectile = projectile.Projectile(self.x, self.y, self.projectile_img)
-            self.projectiles.append(projectile)
+            ship_projectile = projectile.Projectile(self.x - 30, self.y, self.projectile_img)
+            self.projectiles.append(ship_projectile)
             self.cool_down_counter = 1
 
     def get_width(self):

@@ -67,14 +67,14 @@ class Player(ship.Ship):
         pygame.draw.rect(window, constants.GREEN, (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width() * (self.health / self.max_health), 10))
 
     
-
-
 def main():
 
     run = True
     clock = pygame.time.Clock()
     current_level = constants.LEVEL
     current_lives = constants.LIVES
+    player_velocity = constants.PLAYER_VELOCITY
+    projectile_velocity = constants.PLAYER_PROJECTILE_VELOCITY
     ships = {}
     projectiles = {}
     backgrounds = {}
@@ -110,5 +110,23 @@ def main():
 
             if event.type == pygame.QUIT:
                 run = False
+
+        # Player movement
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and player.x > 0:
+            player.x -= player_velocity
+        if keys[pygame.K_RIGHT] and player.x + player.ship_img.get_width() < constants.WINDOW_SIZE[0]:
+            player.x += player_velocity 
+        if keys[pygame.K_UP] and player.y > 0:
+            player.y -= player_velocity
+        if keys[pygame.K_DOWN] and player.y + player.ship_img.get_height() < constants.WINDOW_SIZE[1]:
+            player.y += player_velocity
+
+        if keys[pygame.K_SPACE]:
+            player.shoot()
+
+        player.move_projectiles(-projectile_velocity, [])
+        
+        
 
 main()
