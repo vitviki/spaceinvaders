@@ -14,9 +14,9 @@ pygame.display.set_caption("Space Invaders")
 def loadAssets(ships, projectiles, backgrounds, fonts):
     
     # Ships
-    ships['red_ship']           = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_red_small.png')), constants.SHIP_SIZE_STANDARD)
-    ships['green_ship']         = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_green_small.png')), constants.SHIP_SIZE_STANDARD)
-    ships['blue_ship']          = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_blue_small.png')), constants.SHIP_SIZE_STANDARD)
+    ships['red']           = pygame.transform.scale(pygame.transform.rotate(pygame.image.load(os.path.join('assets', 'pixel_ship_red_small.png')), 180), constants.SHIP_SIZE_STANDARD)
+    ships['green']         = pygame.transform.scale(pygame.transform.rotate(pygame.image.load(os.path.join('assets', 'pixel_ship_green_small.png')),180), constants.SHIP_SIZE_STANDARD)
+    ships['blue']          = pygame.transform.scale(pygame.transform.rotate(pygame.image.load(os.path.join('assets', 'pixel_ship_blue_small.png')), 180), constants.SHIP_SIZE_STANDARD)
     ships['yellow_player_ship'] = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'pixel_ship_yellow.png')), constants.SHIP_SIZE_STANDARD)
     
     # Projectiles
@@ -66,7 +66,30 @@ class Player(ship.Ship):
         pygame.draw.rect(window, constants.RED, (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width(), 10))
         pygame.draw.rect(window, constants.GREEN, (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width() * (self.health / self.max_health), 10))
 
+class Enemy(ship.Ship):
+
+    def __init__(self, x, y, img, projectile_img, health=100):
+        
+        super().__init__(x, y, health)
+        self.ship_img = img
+        self.projectile_img = projectile_img
+        self.mask = pygame.mask.from_surface(self.ship_img)
+
+    def move(self, velocity):
+        
+        self.y += velocity
     
+    def shoot(self):
+        
+        super().shoot()
+
+def check_collision(obj1, obj2):
+
+    offset_x = obj2.x - obj1.x
+    offset_y = obj2.y - obj1.y
+
+    return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
+
 def main():
 
     run = True
@@ -74,7 +97,10 @@ def main():
     current_level = constants.LEVEL
     current_lives = constants.LIVES
     player_velocity = constants.PLAYER_VELOCITY
-    projectile_velocity = constants.PLAYER_PROJECTILE_VELOCITY
+    enemy_velocity = constants.ENEMY_VELOCITY
+    player_projectile_velocity = constants.PLAYER_PROJECTILE_VELOCITY
+    enemy_projectile_velocity = constants.ENEMY_PROJECTILE_VELOCITY
+    enemy_wave_length = constants.ENEMY_WAVE_LENGTH
     ships = {}
     projectiles = {}
     backgrounds = {}
@@ -83,6 +109,8 @@ def main():
     loadAssets(ships, projectiles, backgrounds, fonts)
 
     player = Player(constants.PLAYER_SHIP_SPAWN_COORD[0], constants.PLAYER_SHIP_SPAWN_COORD[1], ships['yellow_player_ship'], projectiles['yellow'])
+    enemies = []
+
 
     def redraw_window():
         
@@ -95,6 +123,10 @@ def main():
 
         WINDOW.blit(lives_label, (10, 10))
         WINDOW.blit(level_label, (constants.WINDOW_SIZE[0] - lives_label.get_width() - 10, 10 ))
+
+        # Draw all the enemies
+        for enemy in enemies:
+            enemy.draw(WINDOW)
 
         player.draw(WINDOW)
         pygame.display.update()
@@ -111,6 +143,17 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
+        # Spawn enemies
+        if len(enemies) == 0:
+            current_level += 1
+            enemy_wave_length += 5
+            for i in range(enemy_wave_length):
+
+                # Enemy and it's projectile color
+                color = random.choice(["red", "green", "blue"])
+                enemy = Enemy(random.randrange(50, constants.WINDOW_SIZE[0]), random.randrange(-1500, -100), ships[color], projectiles[color])
+                enemies.append(enemy)
+
         # Player movement
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and player.x > 0:
@@ -125,7 +168,22 @@ def main():
         if keys[pygame.K_SPACE]:
             player.shoot()
 
-        player.move_projectiles(-projectile_velocity, [])
+        # Enemy movement.
+        for enemy in enemies[:]:
+
+            enemy.move(enemy_velocity)
+            enemy.move_projectiles(enemy_projectile_velocity, player)
+            
+            if random.randrange(0, 2*60) == 1:
+                enemy.shoot()
+
+            if check_collision(enemy, player):
+                player.health -= 10
+                enemies.remove(enemy)
+            elif enemy.y + enemy.get_height() > constants.WINDOW_SIZE[1]:
+                enemies.remove(enemy)
+
+        player.move_projectiles(-player_projectile_velocity, enemies)
         
         
 

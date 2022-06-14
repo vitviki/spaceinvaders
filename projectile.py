@@ -25,4 +25,4 @@ class Projectile:
         offset_x = obj.x - self.x
         offset_y = obj.y - self.y
 
-        return self.mask.overlap(obj.mask, (offset_x, offset_y))
+        return self.mask.overlap(obj.mask, (offset_x, offset_y)) != None
