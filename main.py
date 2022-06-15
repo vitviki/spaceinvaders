@@ -101,6 +101,8 @@ def main():
     player_projectile_velocity = constants.PLAYER_PROJECTILE_VELOCITY
     enemy_projectile_velocity = constants.ENEMY_PROJECTILE_VELOCITY
     enemy_wave_length = constants.ENEMY_WAVE_LENGTH
+    lost = False
+    lose_count = 0
     ships = {}
     projectiles = {}
     backgrounds = {}
@@ -137,6 +139,16 @@ def main():
 
         clock.tick(constants.FPS)
         redraw_window()
+
+        if current_lives <= 0 or player.health <= 0:
+            lost = True
+            lose_count += 1
+
+        if lost:
+            if lose_count * constants.FPS > 5:
+                run = False
+            else:
+                continue
 
         for event in pygame.event.get():
 
