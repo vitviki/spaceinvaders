@@ -7,11 +7,12 @@ import ship
 import projectile
 
 pygame.font.init()
+pygame.mixer.init()
 WINDOW                      = pygame.display.set_mode(constants.WINDOW_SIZE)
 pygame.display.set_caption("Space Invaders")
 
 # Load assets
-def loadAssets(ships, projectiles, backgrounds, fonts):
+def loadAssets(ships, projectiles, backgrounds, fonts, sounds):
     
     # Ships
     ships['red']           = pygame.transform.scale(pygame.transform.rotate(pygame.image.load(os.path.join('assets', 'pixel_ship_red_small.png')), 180), constants.SHIP_SIZE_STANDARD)
@@ -34,6 +35,14 @@ def loadAssets(ships, projectiles, backgrounds, fonts):
     fonts['comicsans_50']       = pygame.font.SysFont('comicsans', 50)    
     fonts['comicsans_60']       = pygame.font.SysFont('comicsans', 60)
     fonts['comicsans_70']       = pygame.font.SysFont('comicsans', 70)
+
+    # Sounds
+    sounds['fire']              = pygame.mixer.Sound(os.path.join('assets', 'projectile_fire.wav'))
+    sounds['hit']               = pygame.mixer.Sound(os.path.join('assets', 'hit.wav'))
+    sounds['winning']           = pygame.mixer.Sound(os.path.join('assets', 'winning.wav'))
+    pygame.mixer.music.load(os.path.join('assets', 'game_music.wav'))
+
+    #sounds['music']             = pygame.mixer.Sound(os.path.join('assets', 'game_music.wav'))
 
 
 class Player(ship.Ship):
@@ -113,8 +122,15 @@ def main():
     projectiles = {}
     backgrounds = {}
     fonts = {}
+    sounds = {}
 
-    loadAssets(ships, projectiles, backgrounds, fonts)
+    loadAssets(ships, projectiles, backgrounds, fonts, sounds)
+
+    pygame.mixer.Sound.set_volume(sounds['fire'], 0.05)
+    pygame.mixer.Sound.set_volume(sounds['hit'], 0.05)
+    pygame.mixer.Sound.set_volume(sounds['winning'], 0.1)
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play(-1)
 
     player = Player(constants.PLAYER_SHIP_SPAWN_COORD[0], constants.PLAYER_SHIP_SPAWN_COORD[1], ships['yellow_player_ship'], projectiles['yellow'])
     enemies = []
@@ -167,58 +183,63 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 game_started = True
 
-        if current_lives <= 0 or player.health <= 0:
-            lost = True
-            lose_count += 1
+        if game_started:
+            if current_lives <= 0 or player.health <= 0:
+                lost = True
+                lose_count += 1
 
-        if lost:
-            if lose_count > constants.FPS * 3:
-                run = False
-            else:
-                continue
+            if lost:
+                if lose_count > constants.FPS * 3:
+                    run = False
+                else:
+                    continue
 
-        
-        # Spawn enemies
-        if len(enemies) == 0:
-            current_level += 1
-            enemy_wave_length += 5
-            for i in range(enemy_wave_length):
-
-                # Enemy and it's projectile color
-                color = random.choice(["red", "green", "blue"])
-                enemy = Enemy(random.randrange(50, constants.WINDOW_SIZE[0]), random.randrange(-1500, -100), ships[color], projectiles[color])
-                enemies.append(enemy)
-
-        # Player movement
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] and player.x > 0:
-            player.x -= player_velocity
-        if keys[pygame.K_RIGHT] and player.x + player.ship_img.get_width() < constants.WINDOW_SIZE[0]:
-            player.x += player_velocity 
-        if keys[pygame.K_UP] and player.y > 0:
-            player.y -= player_velocity
-        if keys[pygame.K_DOWN] and player.y + player.ship_img.get_height() < constants.WINDOW_SIZE[1]:
-            player.y += player_velocity
-
-        if keys[pygame.K_SPACE]:
-            player.shoot()
-
-        # Enemy movement.
-        for enemy in enemies[:]:
-
-            enemy.move(enemy_velocity)
-            enemy.move_projectiles(enemy_projectile_velocity, player)
             
-            if random.randrange(0, 2*60) == 1:
-                enemy.shoot()
+            # Spawn enemies
+            if len(enemies) == 0:
+                if current_level >= 1:
+                    sounds['winning'].play()
+                    
+                current_level += 1
+                enemy_wave_length += 5
+                for i in range(enemy_wave_length):
 
-            if check_collision(enemy, player):
-                player.health -= 10
-                enemies.remove(enemy)
-            elif enemy.y + enemy.get_height() > constants.WINDOW_SIZE[1]:
-                enemies.remove(enemy)
+                    # Enemy and it's projectile color
+                    color = random.choice(["red", "green", "blue"])
+                    enemy = Enemy(random.randrange(50, constants.WINDOW_SIZE[0]), random.randrange(-1500, -100), ships[color], projectiles[color])
+                    enemies.append(enemy)
 
-        player.move_projectiles(-player_projectile_velocity, enemies)
+            # Player movement
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT] and player.x > 0:
+                player.x -= player_velocity
+            if keys[pygame.K_RIGHT] and player.x + player.ship_img.get_width() < constants.WINDOW_SIZE[0]:
+                player.x += player_velocity 
+            if keys[pygame.K_UP] and player.y > 0:
+                player.y -= player_velocity
+            if keys[pygame.K_DOWN] and player.y + player.ship_img.get_height() < constants.WINDOW_SIZE[1]:
+                player.y += player_velocity
+
+            if keys[pygame.K_SPACE]:
+                sounds['fire'].play()
+                player.shoot()
+
+            # Enemy movement.
+            for enemy in enemies[:]:
+
+                enemy.move(enemy_velocity)
+                enemy.move_projectiles(enemy_projectile_velocity, player)
+                
+                if random.randrange(0, 2*60) == 1:
+                    enemy.shoot()
+
+                if check_collision(enemy, player):
+                    player.health -= 10
+                    enemies.remove(enemy)
+                elif enemy.y + enemy.get_height() > constants.WINDOW_SIZE[1]:
+                    enemies.remove(enemy)
+
+            player.move_projectiles(-player_projectile_velocity, enemies)
         
         
 main()
