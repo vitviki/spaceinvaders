@@ -29,7 +29,12 @@ def loadAssets(ships, projectiles, backgrounds, fonts):
     backgrounds['black']        = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'background-black.png')), constants.WINDOW_SIZE)
 
     # Font
-    fonts['comicsans']          = pygame.font.SysFont('comicsans', 30)
+    fonts['comicsans_30']       = pygame.font.SysFont('comicsans', 30)
+    fonts['comicsans_40']       = pygame.font.SysFont('comicsans', 40)
+    fonts['comicsans_50']       = pygame.font.SysFont('comicsans', 50)    
+    fonts['comicsans_60']       = pygame.font.SysFont('comicsans', 60)
+    fonts['comicsans_70']       = pygame.font.SysFont('comicsans', 70)
+
 
 class Player(ship.Ship):
 
@@ -93,6 +98,7 @@ def check_collision(obj1, obj2):
 def main():
 
     run = True
+    game_started = False
     clock = pygame.time.Clock()
     current_level = constants.LEVEL
     current_lives = constants.LIVES
@@ -119,18 +125,31 @@ def main():
         # Render background image
         WINDOW.blit(backgrounds['black'], (0, 0))
 
-        # Draw in game text
-        lives_label = fonts['comicsans'].render(f"Lives: {current_lives}",1, constants.WHITE)
-        level_label = fonts['comicsans'].render(f"Level: {current_level}",1, constants.WHITE)
+        if game_started:
 
-        WINDOW.blit(lives_label, (10, 10))
-        WINDOW.blit(level_label, (constants.WINDOW_SIZE[0] - lives_label.get_width() - 10, 10 ))
+            # Draw in game text
+            lives_label = fonts['comicsans_30'].render(f"Lives: {current_lives}",1, constants.WHITE)
+            level_label = fonts['comicsans_30'].render(f"Level: {current_level}",1, constants.WHITE)
 
-        # Draw all the enemies
-        for enemy in enemies:
-            enemy.draw(WINDOW)
+            WINDOW.blit(lives_label, (10, 10))
+            WINDOW.blit(level_label, (constants.WINDOW_SIZE[0] - lives_label.get_width() - 10, 10 ))
 
-        player.draw(WINDOW)
+            # Draw all the enemies
+            for enemy in enemies:
+                enemy.draw(WINDOW)
+
+            player.draw(WINDOW)
+
+            # Lost label
+            if lost:
+                lost_label = fonts['comicsans_60'].render("You Lost!", 1, constants.WHITE)
+                WINDOW.blit(lost_label, (constants.WINDOW_SIZE[0] // 2 - lost_label.get_width() // 2, 350))
+
+        else:
+
+            title_label = fonts['comicsans_50'].render("Press mouse button to begin...", 1, constants.WHITE)
+            WINDOW.blit(title_label, (constants.WINDOW_SIZE[0] // 2 - title_label.get_width() // 2, 350))
+
         pygame.display.update()
 
 
@@ -140,21 +159,25 @@ def main():
         clock.tick(constants.FPS)
         redraw_window()
 
-        if current_lives <= 0 or player.health <= 0:
-            lost = True
-            lose_count += 1
-
-        if lost:
-            if lose_count * constants.FPS > 5:
-                run = False
-            else:
-                continue
-
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
                 run = False
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                game_started = True
+
+        if current_lives <= 0 or player.health <= 0:
+            lost = True
+            lose_count += 1
+
+        if lost:
+            if lose_count > constants.FPS * 3:
+                run = False
+            else:
+                continue
+
+        
         # Spawn enemies
         if len(enemies) == 0:
             current_level += 1
@@ -198,5 +221,4 @@ def main():
         player.move_projectiles(-player_projectile_velocity, enemies)
         
         
-
 main()
